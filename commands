@@ -1,0 +1,8 @@
+##backend
+http://127.0.0.1:8000/
+## backend command on local host
+python -m uvicorn app:app --reload
+## frontend command on local host
+npm run dev
+## command for activating venv
+.\venv\Scripts\Activate.ps1
