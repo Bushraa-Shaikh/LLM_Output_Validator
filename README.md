@@ -1,33 +1,40 @@
 # LLM Output Validator
 
-A Python tool that extracts structured, validated data from unstructured text using an LLM — with automatic retry-and-self-correction when the LLM's output fails validation.
+A full-stack web app that extracts structured, validated data from unstructured text using an LLM — with automatic retry and self-correction when the model's output fails validation, and an honest rejection when the input doesn't match the requested data type.
 
 ## The Problem
 
-LLMs are unreliable at producing perfectly formatted structured output (e.g. JSON matching a schema). They can return malformed JSON, missing fields, or wrong data types. Naively trusting LLM output in production leads to silent failures or crashes.
+LLMs are unreliable at producing perfectly formatted structured output. They can return malformed JSON, missing fields, wrong data types — or worse, invent plausible-looking values when the input doesn't actually contain what's being asked for. Naively trusting LLM output in production leads to silent failures or fabricated data.
 
 ## The Solution
 
-This project extracts a structured product review from raw text, validates it against a strict schema, and — if validation fails — automatically retries by feeding the LLM its own broken output plus the specific error, so it can self-correct. Up to 3 attempts before failing loudly and explicitly.
+This app extracts structured data (product reviews, invoices, or resumes) from raw text, validates it against a strict schema, and — if validation fails — automatically retries by feeding the LLM its own broken output plus the specific error, so it can self-correct (up to 3 attempts). A separate relevance check runs first, so the app cleanly rejects input that doesn't actually match the selected data type instead of hallucinating fake values to force a fit.
+
+## Features
+
+- **Multiple schema types** — Product Review, Invoice, Resume (easily extensible)
+- **Automatic retry with error-feedback self-correction** — up to 3 attempts, each one shown the previous failure
+- **Relevance detection** — rejects irrelevant/insufficient input honestly instead of fabricating data
+- **Extraction history** — last 10 extractions saved locally, browsable and reloadable
+- **JSON export** — copy any result as formatted JSON
+- **Full-stack** — FastAPI backend + React/Vite/Tailwind frontend
 
 ## How It Works
 
-1. **`schema.py`** — defines the exact shape of valid output using Pydantic (fields, types, constraints)
-2. **`prompts.py`** — builds the extraction prompt (first attempt) and a separate "fix" prompt (retries, includes the previous bad output + error)
-3. **`validator.py`** — orchestrates the retry loop: calls the LLM, tries to parse/validate the response, and on failure, calls the LLM again with the fix prompt
-4. **`main.py`** — a minimal entry point demonstrating the validator on a sample review
+**Backend (`backend/`)**
+- `schema.py` — Pydantic schemas defining the exact shape of valid output for each data type
+- `prompts.py` — builds the extraction prompt, the retry/fix prompt, and the relevance-check prompt per schema
+- `validator.py` — orchestrates relevance checking, extraction, validation, and the retry loop
+- `app.py` — FastAPI app exposing `/extract` and `/schemas` endpoints
+
+**Frontend (`frontend/`)**
+- React app with a schema picker, text input, live-rendered results per schema type, extraction history (persisted via `localStorage`), and JSON export
 
 ## Tech Stack
 
-- Python
-- LangChain (`PydanticOutputParser`, `PromptTemplate`)
-- Pydantic (schema definition and validation)
-- Groq API (LLM inference)
+- **Backend:** Python, FastAPI, LangChain (`PydanticOutputParser`), Pydantic, Groq API
+- **Frontend:** React, Vite, Tailwind CSS
 
 ## Setup
 
-1. Clone this repo
-2. Create a virtual environment: `python -m venv venv`
-3. Activate it: `venv\Scripts\Activate.ps1` (Windows) or `source venv/bin/activate` (Mac/Linux)
-4. Install dependencies: `pip install -r requirements.txt`
-5. Create a `.env` file with your Groq API key:
+### Backend
