@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const API_URL = 'http://127.0.0.1:8000'
+const API_URL = 'https://llm-output-validator-863db7c1.fastapicloud.dev'
 
 const SCHEMA_OPTIONS = [
   { value: 'product_review', label: 'Product Review' },
